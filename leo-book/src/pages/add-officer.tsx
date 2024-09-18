@@ -1,192 +1,127 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Member } from "@/interface/member";
+import { useState } from "react";
 
-const AddMember = () => {
-  const initialMemberState: Member = {
+interface Officer {
+  name: string;
+  designation: string;
+}
+
+export default function AddOfficer() {
+  // State for officer name and designation
+  const [officers, setOfficers] = useState<Officer[]>([]);
+
+  // Temporary state for individual officer data
+  const [officerData, setOfficerData] = useState<Officer>({
     name: "",
-    mobile: "",
-    faculty: "",
-    batch: 0,
-    email: "",
-    password: "",
-    addedBy: "",
-    ratings: 0,
-    district: "",
+    designation: "President", // default to 'President'
+  });
+
+  // Handle input change for name
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOfficerData({
+      ...officerData,
+      name: e.target.value, // Update only the name
+    });
   };
-  const [member, setMember] = useState<Member>(initialMemberState);
-  const [batchYears, setBatchYears] = useState<number[]>([]);
 
-  useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length:5 }, (_,i) => currentYear-(i+1));
-    setBatchYears(years);
-  },[]);
+  // Handle designation change
+  const handleDesignationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setOfficerData({
+      ...officerData,
+      designation: e.target.value, // Update only the designation
+    });
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Add officer to the list of officers
+  const addOfficerToList = () => {
+    setOfficers([...officers, officerData]);
+    setOfficerData({ name: "", designation: "President" }); // Reset form after adding
+  };
+
+  // Handle submit form
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    try {
-      const res = await axios.post('http://localhost:8080/member/add', member);
-      console.log("Member added:", res.data);
 
-      setMember(initialMemberState);
-    } catch (error) {
-      console.error("Error adding member:", error);
+    try {
+      const response = await fetch("http://localhost:8080/officer/add-officer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(officers), // Send array of officers to backend
+      });
+
+      if (response.ok) {
+        alert("Officers added successfully!");
+      } else {
+        alert("Failed to add officers");
+      }
+    } catch (err) {
+      console.error("Error:", err);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-center text-3xl font-bold mb-6">Add Member</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Name */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Name</label>
-              <input
-                type="text"
-                placeholder="Enter name"
-                value={member.name}
-                onChange={(e) => setMember({ ...member, name: e.target.value })}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-              />
-            </div>
+    <div className="container mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Add Officer</h1>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Input for officer name */}
+        <div className="flex space-x-4">
+          <label className="border p-2 w-full">Officer Name</label>
+          <input
+            type="text"
+            name="name"
+            placeholder="Enter Name"
+            value={officerData.name}
+            onChange={handleChange}
+            className="border p-2 w-full"
+            required
+          />
+        </div>
 
-            {/* Mobile */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Mobile No.</label>
-              <input
-                type="text"
-                placeholder="Enter mobile number"
-                value={member.mobile}
-                onChange={(e) => setMember({ ...member, mobile: e.target.value })}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-              />
-            </div>
+        {/* Dropdown for designation */}
+        <div className="flex space-x-4">
+          <label className="border p-2 w-full">Designation</label>
+          <select
+            name="designation"
+            value={officerData.designation}
+            onChange={handleDesignationChange}
+            className="border p-2 w-full"
+          >
+            <option value="President">President</option>
+            <option value="Secretary">Secretary</option>
+            <option value="Treasurer">Treasurer</option>
+            <option value="Assistant Secretary">Assistant Secretary</option>
+            <option value="Assistant Treasurer">Assistant Treasurer</option>
+          </select>
+        </div>
 
-            {/* Faculty */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Faculty</label>
-              <select
-                value={member.faculty}
-                onChange={(e) => setMember({ ...member, faculty: e.target.value })}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-              >
-                <option value="" disabled>Select Faculty</option>
-                <option value="Faculty of Architecture">Faculty of Architecture</option>
-                <option value="Faculty of Business">Faculty of Business</option>
-                <option value="Faculty of Engineering">Faculty of Engineering</option>
-                <option value="Faculty of Information Technology">Faculty of IT</option>
-                <option value="Faculty of Medicine">Faculty of Medicine</option>
-                <option value="NDT">NDT</option>
-              </select>
-            </div>
+        {/* Button to add officer to the list */}
+        <button
+          type="button"
+          onClick={addOfficerToList}
+          className="bg-green-500 text-white p-2 rounded"
+        >
+          Add Officer to List
+        </button>
 
-            {/* District */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Distict</label>
-              <select
-                value={member.faculty}
-                onChange={(e) => setMember({ ...member, faculty: e.target.value })}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-              >
-                <option value="" disabled>Select District</option>
-                <option value="Ampara">Ampara</option>
-                <option value="Anuradhapura">Anuradhapura</option>
-                <option value="Badulla">Badulla</option>
-                <option value="Batticaloa">Batticaloa</option>
-                <option value="Colombo">Colombo</option>
-                <option value="Galle">	Galle</option>
-                <option value="Gampaha">Gampaha</option>
-                <option value="Hambantota">Hambantota</option>
-                <option value="Jaffna">Jaffna</option>
-                <option value="Kalutara">Kalutara</option>
-                <option value="Kandy">Kandy</option>
-                <option value="Kegalle">Kegalle</option>
-                <option value="Kilinochchi">Kilinochchi</option>
-                <option value="Kurunegala">Kurunegala</option>
-                <option value="Mannar">Mannar</option>
-                <option value="Matale">Matale</option>
-                <option value="	Matara">Matara</option>
-                <option value="Monaragala">Monaragala</option>
-                <option value="Mullaitivu">Mullaitivu</option>
-                <option value="Nuwara Eliya">Nuwara Eliya</option>
-                <option value="Polonnaruwa">Polonnaruwa</option>
-                <option value="Puttalam">Puttalam</option>
-                <option value="Ratnapura">Ratnapura</option>
-                <option value="Trincomalee">Trincomalee</option>
-                <option value="Vavuniya">Vavuniya</option>
-              </select>
-            </div>
+        {/* Display list of added officers */}
+        <div>
+          <h2 className="text-xl font-semibold mt-4">Officers List:</h2>
+          <ul className="list-disc ml-5">
+            {officers.map((officer, index) => (
+              <li key={index}>
+                {officer.name} - {officer.designation}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-            {/* Batch */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Batch</label>
-              <select
-                value={member.batch}
-                onChange={(e) => setMember({...member,batch:Number(e.target.value)})}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-                >
-                    <option value="0" disabled>Select Batch</option>
-                    {batchYears.map((year) =>(
-                        <option key={year} value={year - 2000}>{year - 2000}</option>
-                    ))}
-                    </select>
-            </div>
-
-            {/* Email */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Email</label>
-              <input
-                type="email"
-                placeholder="Enter email"
-                value={member.email}
-                onChange={(e) => setMember({ ...member, email: e.target.value })}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-              />
-            </div>
-
-            {/* Password */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Password</label>
-              <input
-                type="password"
-                placeholder="Enter password"
-                value={member.password}
-                onChange={(e) => setMember({ ...member, password: e.target.value })}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-              />
-            </div>
-
-            {/* Added By */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-gray-700 font-semibold">Added By</label>
-              <input
-                type="text"
-                placeholder="Enter who added"
-                value={member.addedBy}
-                onChange={(e) => setMember({ ...member, addedBy: e.target.value })}
-                className="border border-gray-300 p-2 rounded w-full"
-                required
-              />
-            </div>
-          </div>
-
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded w-full">
-            Add Member
-          </button>
-        </form>
-      </div>
+        {/* Submit button */}
+        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+          Submit Officers to Backend
+        </button>
+      </form>
     </div>
   );
-};
-
-export default AddMember;
+}

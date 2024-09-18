@@ -6,7 +6,7 @@ export interface  Member {
     batch: number;
     district: string;
     email: string,
-    password: string,
+    password?: string,
     addedDate?: Date,
     addedBy: string,
     ratings?: number
